@@ -1,6 +1,6 @@
 const yargs=require('yargs');
-const geoCodeAddress=require('./geocode/geocodeAddress.js')
-const forecast=require('./forecast/forecast.js')
+const geoCodeAddress=require('./geocode/promiseGeoCode.js')
+const forecast=require('./forecast/promiseForecast.js')
 const argv=yargs
 .options({
 a:{
@@ -12,20 +12,15 @@ a:{
 }).help()
 .alias('help','h')
 .argv;
-geoCodeAddress.geoCode(argv.a,(error,result)=>{
-  if (error) {
-    console.log(error);
+geoCodeAddress.geoCode(argv.a).then((location)=>{
+  console.log(JSON.stringify(location,undefined,2));
 
-  } else {
-console.log(JSON.stringify(result,undefined,2));
-console.log("WEATHER:");
-forecast.forecastLoc(result.latitude,result.longitude,(errorWeather,resultWeather)=>{
-  if (errorWeather) {
-    console.log(errorWeather);
-  } else {
-    console.log(JSON.stringify(resultWeather,undefined,2));
-  }
-})
+  return forecast.forecastLoc(location.latitude,location.longitude);
+}).then((weather)=>{
+    console.log("WEATHER:");
+    console.log(JSON.stringify(weather,undefined,2));
 
-  }
+}).catch((errorMessage)=>{
+  console.log(errorMessage);
+
 });
